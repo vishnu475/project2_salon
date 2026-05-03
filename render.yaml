@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: salon-fullstack
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATA_DIR
+        value: /data
+      - key: PORT
+        value: 4000
+    disk:
+      name: salon-data
+      mountPath: /data
+      sizeGB: 1

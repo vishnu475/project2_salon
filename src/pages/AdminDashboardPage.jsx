@@ -1,6 +1,7 @@
 import { Users, CreditCard, CalendarClock, LogOut } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { API_BASE_URL, ROOT_URL } from '../config'
 
 function getStatusPill(status) {
   if (status === 'Paid' || status === 'Confirmed') {
@@ -20,7 +21,7 @@ function AdminDashboardPage() {
   const loadSummary = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:4000/api/admin/summary')
+      const response = await fetch(`${ROOT_URL}/api/admin/summary`)
       if (!response.ok) return
       const data = await response.json()
       setLiveData(data)
@@ -31,13 +32,50 @@ function AdminDashboardPage() {
     }
   }
 
+  const [newService, setNewService] = useState({
+    title: '',
+    description: '',
+    brief: '',
+    price: '',
+    duration: '',
+    image: '',
+    category: 'Beauty',
+  })
+
+  const handleCreateService = async (e) => {
+    e.preventDefault()
+    try {
+      const response = await fetch(`${ROOT_URL}/api/admin/services`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newService),
+      })
+      if (response.ok) {
+        setNewService({ title: '', description: '', brief: '', price: '', duration: '', image: '', category: 'Beauty' })
+        await loadSummary()
+      }
+    } catch {
+      window.alert('Failed to create service.')
+    }
+  }
+
+  const handleDeleteService = async (id) => {
+    if (!window.confirm('Delete this service?')) return
+    try {
+      await fetch(`${ROOT_URL}/api/admin/services/${id}`, { method: 'DELETE' })
+      await loadSummary()
+    } catch {
+      window.alert('Failed to delete service.')
+    }
+  }
+
   useEffect(() => {
     loadSummary()
   }, [])
 
   const handleBookingStatusUpdate = async (bookingId, nextStatus) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/admin/bookings/${bookingId}/status`, {
+      const response = await fetch(`${ROOT_URL}/api/admin/bookings/${bookingId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus }),
@@ -55,7 +93,7 @@ function AdminDashboardPage() {
 
   const handlePaymentStatusUpdate = async (paymentId, nextStatus) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/admin/payments/${paymentId}/status`, {
+      const response = await fetch(`${ROOT_URL}/api/admin/payments/${paymentId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus }),
@@ -71,9 +109,64 @@ function AdminDashboardPage() {
     }
   }
 
-  const activeUsers = liveData?.users || users
-  const activePayments = liveData?.payments || paymentDetails
-  const activeBookings = liveData?.bookings || bookingSlots
+  const handleDeleteBooking = async (bookingId) => {
+    if (!window.confirm('Are you sure you want to delete this booking?')) return
+    try {
+      const response = await fetch(`${ROOT_URL}/api/admin/bookings/${bookingId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        window.alert(data.message || 'Failed to delete booking.')
+        return
+      }
+      await loadSummary()
+    } catch {
+      window.alert('Could not connect to backend.')
+    }
+  }
+
+  const handleDeletePayment = async (paymentId) => {
+    if (!window.confirm('Are you sure you want to delete this payment?')) return
+    try {
+      const response = await fetch(`${ROOT_URL}/api/admin/payments/${paymentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        window.alert(data.message || 'Failed to delete payment.')
+        return
+      }
+      await loadSummary()
+    } catch {
+      window.alert('Could not connect to backend.')
+    }
+  }
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return
+    try {
+      const response = await fetch(`${ROOT_URL}/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        window.alert(data.message || 'Failed to delete user.')
+        return
+      }
+      await loadSummary()
+    } catch {
+      window.alert('Could not connect to backend.')
+    }
+  }
+
+  const activeUsers = (liveData?.users || users || []).filter(Boolean)
+  const activePayments = (liveData?.payments || paymentDetails || []).filter(Boolean)
+  const activeBookings = (liveData?.bookings || bookingSlots || []).filter(Boolean)
+  const activeServices = liveData?.services || []
 
   const totalPayments = activePayments.reduce((sum, item) => sum + Number(item.amount || 0), 0)
   const pendingPayments = activePayments.filter((item) => item.status === 'Pending').length
@@ -92,12 +185,12 @@ function AdminDashboardPage() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Admin Dashboard</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Operations Dashboard</p>
             <h1 className="mt-2 text-3xl font-semibold">Salon Operations Panel</h1>
           </div>
           <div className="flex flex-wrap gap-2">
             <a
-              href="http://localhost:4000/api/admin/export"
+              href={`${ROOT_URL}/api/admin/export`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2 text-sm text-neutral-200 hover:border-amber-300 hover:text-amber-300"
@@ -168,6 +261,95 @@ function AdminDashboardPage() {
         </section>
 
         <section className="mt-8 rounded-2xl border border-white/10 bg-neutral-900 p-5">
+          <h2 className="text-xl font-semibold text-amber-300">Manage Services</h2>
+          <form onSubmit={handleCreateService} className="mt-4 grid gap-4 md:grid-cols-3">
+            <input
+              type="text"
+              placeholder="Service Title"
+              value={newService.title}
+              onChange={(e) => setNewService({ ...newService, title: e.target.value })}
+              className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-amber-300 text-white"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Price (e.g. $50)"
+              value={newService.price}
+              onChange={(e) => setNewService({ ...newService, price: e.target.value })}
+              className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-amber-300 text-white"
+            />
+            <input
+              type="text"
+              placeholder="Duration (e.g. 45 min)"
+              value={newService.duration}
+              onChange={(e) => setNewService({ ...newService, duration: e.target.value })}
+              className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-amber-300 text-white"
+            />
+            <input
+              type="text"
+              placeholder="Image URL"
+              value={newService.image}
+              onChange={(e) => setNewService({ ...newService, image: e.target.value })}
+              className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-amber-300 text-white"
+              required
+            />
+            <select
+              value={newService.category}
+              onChange={(e) => setNewService({ ...newService, category: e.target.value })}
+              className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-amber-300 text-white"
+            >
+              <option value="Hair">Hair</option>
+              <option value="Beauty">Beauty</option>
+              <option value="Laser">Laser</option>
+              <option value="Grooming">Grooming</option>
+            </select>
+            <button type="submit" className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-black hover:bg-amber-200">
+              Add Service
+            </button>
+            <textarea
+              placeholder="Short Description"
+              value={newService.description}
+              onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+              className="col-span-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-amber-300 text-white"
+              rows={2}
+              required
+            />
+          </form>
+
+          <div className="mt-6 overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="text-neutral-400">
+                <tr>
+                  <th className="py-2 pr-4">Service</th>
+                  <th className="py-2 pr-4">Category</th>
+                  <th className="py-2 pr-4">Price</th>
+                  <th className="py-2 pr-4">Duration</th>
+                  <th className="py-2 pr-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeServices.map((service) => (
+                  <tr key={service.id} className="border-t border-white/10">
+                    <td className="py-2 pr-4 font-medium">{service.title}</td>
+                    <td className="py-2 pr-4 text-neutral-400">{service.category}</td>
+                    <td className="py-2 pr-4 text-amber-300">{service.price}</td>
+                    <td className="py-2 pr-4 text-neutral-400">{service.duration}</td>
+                    <td className="py-2 pr-4">
+                      <button
+                        onClick={() => handleDeleteService(service.id)}
+                        className="rounded-md border border-red-500/40 px-2 py-1 text-xs text-red-300 hover:bg-red-500/10"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-white/10 bg-neutral-900 p-5">
           <h2 className="text-xl font-semibold text-amber-300">User Details</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-left text-sm">
@@ -177,6 +359,7 @@ function AdminDashboardPage() {
                   <th className="py-2 pr-4">Email</th>
                   <th className="py-2 pr-4">Phone</th>
                   <th className="py-2 pr-4">Registered On</th>
+                  <th className="py-2 pr-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,11 +372,19 @@ function AdminDashboardPage() {
                       <td className="py-2 pr-4">
                         {user.registeredAt ? new Date(user.registeredAt).toLocaleString() : '-'}
                       </td>
+                      <td className="py-2 pr-4">
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="rounded-md border border-red-500/40 px-2 py-1 text-xs text-red-300 hover:bg-red-500/10"
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td className="py-3 text-neutral-400" colSpan={4}>
+                    <td className="py-3 text-neutral-400" colSpan={5}>
                       No registered users yet.
                     </td>
                   </tr>
@@ -247,6 +438,12 @@ function AdminDashboardPage() {
                         >
                           Mark Pending
                         </button>
+                        <button
+                          onClick={() => handleDeletePayment(payment.id)}
+                          className="rounded-md border border-red-500/40 px-2 py-1 text-xs text-red-300 hover:bg-red-500/10"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -299,6 +496,12 @@ function AdminDashboardPage() {
                           className="rounded-md border border-blue-500/40 px-2 py-1 text-xs text-blue-300 hover:bg-blue-500/10"
                         >
                           In Progress
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBooking(booking.id)}
+                          className="rounded-md border border-red-500/40 px-2 py-1 text-xs text-red-300 hover:bg-red-500/10"
+                        >
+                          Delete
                         </button>
                       </div>
                     </td>

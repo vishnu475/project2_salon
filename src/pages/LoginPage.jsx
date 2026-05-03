@@ -7,9 +7,7 @@ function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [formData, setFormData] = useState({ phone: '' })
-  const [otpData, setOtpData] = useState({ smsOtp: '' })
-  const [otpSent, setOtpSent] = useState(false)
+  const [formData, setFormData] = useState({ identifier: '', password: '' })
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
@@ -17,47 +15,16 @@ function LoginPage() {
 
   const handleChange = (event) => {
     const { name, value } = event.target
-    const nextValue = name === 'phone' ? value.replace(/\D/g, '').slice(0, 10) : value
-    setFormData((prev) => ({ ...prev, [name]: nextValue }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
     setError('')
     setSuccessMessage('')
-  }
-
-  const handleSendOtp = async () => {
-    if (formData.phone.trim().length !== 10) {
-      setError('Enter a valid 10-digit phone number first.')
-      return
-    }
-
-    try {
-      const response = await fetch('http://localhost:4000/api/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: formData.phone.trim(), purpose: 'login' }),
-      })
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to send OTP.')
-      }
-
-      setOtpSent(true)
-      setSuccessMessage(data.devMode ? `Dev OTP: ${data.devOtp}` : 'Verification code sent to your mobile number.')
-      setError('')
-    } catch (err) {
-      setError(err.message)
-    }
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
 
     try {
-      if (!otpSent) {
-        throw new Error('Please send and verify the SMS OTP before logging in.')
-      }
-
-      await login({ phone: formData.phone.trim(), otp: otpData.smsOtp.trim() })
+      await login({ identifier: formData.identifier.trim(), password: formData.password.trim() })
       navigate(from, { replace: true })
     } catch (err) {
       setError(err.message)
@@ -69,42 +36,29 @@ function LoginPage() {
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-black/45 p-8 shadow-xl backdrop-blur-sm">
         <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Salon Luxe</p>
         <h1 className="mt-3 text-3xl font-semibold">Login</h1>
-        <p className="mt-2 text-sm text-neutral-300">Sign in to continue with your bookings and profile.</p>
+        <p className="mt-2 text-sm text-neutral-300">Sign in with your email or username and password.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <input
-            type="tel"
-            name="phone"
-            placeholder="Phone Number"
-            value={formData.phone}
+            type="text"
+            name="identifier"
+            placeholder="Email or Username"
+            value={formData.identifier}
             onChange={handleChange}
             className="w-full rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-sm outline-none ring-amber-300 focus:ring-2"
-            pattern="[0-9]{10}"
             required
           />
 
-          <button
-            type="button"
-            onClick={handleSendOtp}
-            className="w-full rounded-xl border border-amber-300/60 bg-amber-300/10 px-5 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
-          >
-            Send SMS OTP
-          </button>
-
-          {otpSent ? (
-            <input
-              type="text"
-              placeholder="SMS OTP"
-              value={otpData.smsOtp}
-              onChange={(event) => {
-                setOtpData((prev) => ({ ...prev, smsOtp: event.target.value.replace(/\D/g, '').slice(0, 6) }))
-                setError('')
-              }}
-              className="w-full rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-sm outline-none ring-amber-300 focus:ring-2"
-              maxLength={6}
-              required
-            />
-          ) : null}
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-sm outline-none ring-amber-300 focus:ring-2"
+            minLength={6}
+            required
+          />
 
           {error ? <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p> : null}
           {successMessage ? (
@@ -117,7 +71,7 @@ function LoginPage() {
             type="submit"
             className="w-full rounded-xl bg-amber-300 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-200"
           >
-            Login With OTP
+            Login Now
           </button>
         </form>
 
@@ -127,6 +81,20 @@ function LoginPage() {
             Create an account
           </Link>
         </p>
+        <p className="mt-2 text-sm text-neutral-300">
+          Forgot your password?{' '}
+          <Link to="/forgot-password" className="font-semibold text-amber-300 hover:text-amber-200">
+            Recover it here
+          </Link>
+        </p>
+        <div className="mt-4">
+          <Link
+            to="/forgot-password"
+            className="block w-full rounded-xl border border-amber-300/60 bg-amber-300/10 px-5 py-3 text-center text-sm font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
+          >
+            Reset Password
+          </Link>
+        </div>
       </div>
     </main>
   )

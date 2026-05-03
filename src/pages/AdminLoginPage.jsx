@@ -3,7 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 function AdminLoginPage() {
-  const { loginAdmin, isAdminAuthenticated, adminProfile } = useAuth()
+  const { loginAdmin, logoutAdmin, isAdminAuthenticated, adminProfile } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [formData, setFormData] = useState({ email: '', password: '' })
@@ -15,14 +15,20 @@ function AdminLoginPage() {
     return <Navigate to="/admin/dashboard" replace />
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     try {
-      loginAdmin(formData)
+      await loginAdmin(formData)
       navigate(from, { replace: true })
     } catch (err) {
       setError(err.message)
     }
+  }
+
+  const handleClearSession = () => {
+    logoutAdmin()
+    setFormData({ email: '', password: '' })
+    setError('Cleared saved admin session. Try signing in again.')
   }
 
   return (
@@ -72,6 +78,16 @@ function AdminLoginPage() {
             Login as Admin
           </button>
         </form>
+        <button
+          type="button"
+          onClick={handleClearSession}
+          className="mt-3 w-full rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-neutral-200 transition hover:border-amber-300 hover:text-amber-300"
+        >
+          Clear Saved Admin Session
+        </button>
+        <p className="mt-2 text-xs text-neutral-400">
+          If you see invalid credentials, clear the saved admin session and re-enter the exact email/password from admin register.
+        </p>
         <p className="mt-5 text-sm text-neutral-300">
           Need to create admin credentials?{' '}
           <Link to="/admin/register" className="font-semibold text-amber-300 hover:text-amber-200">

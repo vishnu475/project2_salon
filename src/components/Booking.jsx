@@ -1,25 +1,22 @@
 import { motion } from 'framer-motion'
+import { ROOT_URL } from '../config'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import SectionHeading from './SectionHeading'
 import { useAuth } from '../context/AuthContext'
-
-const SERVICE_OPTIONS = [
-  'Hair',
-  'Facial',
-  'Waxing',
-  'Nails',
-  'Laser',
-  'Men Grooming',
-  'Beard Styling',
-  'Kids Haircut (Boys)',
-]
+import PaymentModal from './PaymentModal'
 
 function Booking() {
+  const [dynamicServices, setDynamicServices] = useState([])
+  const [specialists, setSpecialists] = useState([])
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [pendingBookingData, setPendingBookingData] = useState(null)
+  
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated, createBooking } = useAuth()
   const [selectedService, setSelectedService] = useState('Select Service')
+  const [selectedSpecialist, setSelectedSpecialist] = useState('Any Specialist')
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -28,14 +25,27 @@ function Booking() {
   })
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const serviceFromQuery = params.get('service')
-    if (serviceFromQuery && SERVICE_OPTIONS.includes(serviceFromQuery)) {
-      setSelectedService(serviceFromQuery)
+    const fetchData = async () => {
+      try {
+        const [servicesRes, specialistsRes] = await Promise.all([
+          fetch(`${ROOT_URL}/api/services`),
+          fetch(`${ROOT_URL}/api/specialists`)
+        ])
+        const servicesData = await servicesRes.json()
+        const specialistsData = await specialistsRes.json()
+        
+        if (servicesData.services) setDynamicServices(servicesData.services)
+        if (specialistsData.specialists) setSpecialists(specialistsData.specialists)
+      } catch (err) {
+        console.error('Failed to fetch data for booking', err)
+      }
     }
-  }, [location.search])
+    fetchData()
+  }, [])
 
-  const handleSubmit = async (event) => {
+  const selectedServiceDetails = dynamicServices.find(s => s.title === selectedService)
+
+  const handleSubmit = (event) => {
     event.preventDefault()
 
     if (!isAuthenticated) {
@@ -48,24 +58,52 @@ function Booking() {
       return
     }
 
+    // Instead of immediate booking, open payment modal
+    setPendingBookingData({
+      customerName: formData.name,
+      phone: formData.phone,
+      service: selectedService,
+      specialist: selectedSpecialist,
+      date: formData.date,
+      slot: formData.slot,
+    })
+    setIsPaymentModalOpen(true)
+  }
+
+  const handlePaymentSuccess = async (method) => {
     try {
       await createBooking({
-        customerName: formData.name,
-        phone: formData.phone,
-        service: selectedService,
-        date: formData.date,
-        slot: formData.slot,
+        ...pendingBookingData,
+        paymentMethod: method,
+        amount: selectedServiceDetails?.price || '$0',
+        paymentStatus: 'Paid'
       })
-      window.alert('Booking request submitted successfully. Added to admin dashboard.')
+      setIsPaymentModalOpen(false)
+      window.alert('Payment successful and booking confirmed!')
       setFormData({ name: '', phone: '', date: '', slot: '' })
       setSelectedService('Select Service')
     } catch (error) {
-      window.alert(error.message)
+      window.alert('Booking failed after payment: ' + error.message)
     }
   }
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const serviceFromQuery = params.get('service')
+    if (serviceFromQuery) {
+      setSelectedService(serviceFromQuery)
+    }
+  }, [location.search])
+
   return (
     <section id="contact" className="bg-neutral-900/70 px-6 py-20 md:px-8">
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        onPaymentSuccess={handlePaymentSuccess}
+        amount={selectedServiceDetails?.price || '$0'}
+        serviceName={selectedService}
+      />
       <div className="mx-auto max-w-4xl">
         <SectionHeading
           eyebrow="Book Appointment"
@@ -104,9 +142,24 @@ function Booking() {
             onChange={(event) => setSelectedService(event.target.value)}
             className="rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-sm outline-none ring-amber-300 focus:ring-2"
           >
-            <option>Select Service</option>
-            {SERVICE_OPTIONS.map((service) => (
-              <option key={service}>{service}</option>
+            <option disabled>Select Service</option>
+            {dynamicServices.map((service) => (
+              <option key={service.id} value={service.title}>
+                {service.title}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedSpecialist}
+            onChange={(event) => setSelectedSpecialist(event.target.value)}
+            className="rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-sm outline-none ring-amber-300 focus:ring-2"
+          >
+            <option value="Any Specialist">Any Specialist</option>
+            {specialists.map((spec) => (
+              <option key={spec.id} value={spec.name}>
+                {spec.name} ({spec.role})
+              </option>
             ))}
           </select>
           <input

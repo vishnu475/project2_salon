@@ -1,234 +1,411 @@
 # Project 2 Salon
 
-Salon booking and customer management app built with React, Vite, Express, and SQLite.
+Full-stack salon booking application with OTP-based user onboarding, booking/payment tracking, and admin management.
 
-The project has two parts:
+## Architecture
 
-- Frontend: React app served by Vite at `http://localhost:5173`
-- Backend: Express API server at `http://localhost:4000`
+- Frontend: React 19 + Vite
+- Backend: Node.js + Express 5 REST API
+- Database: SQLite via better-sqlite3
+- Mail/OTP delivery: Nodemailer (SMTP)
 
-## What this app does
+## New Premium Features (v2.0)
 
-- Lets users register with email and mobile number.
-- Lets authenticated users create salon bookings.
-- Saves bookings and payment records in SQLite.
-- Sends booking confirmation emails.
-- Provides admin dashboard data, booking status updates, payment status updates, and export support.
+This project has been enhanced with high-end salon features to provide a professional user experience:
 
-## Main features
+1.  **AI Virtual Makeover**: A floating AI tool that allows users to upload photos and see simulated hair/skin transformations before booking.
+2.  **Luxe Loyalty Rewards**: Automated points system (10 pts per booking) with redeemable milestones and progress tracking in the user portal.
+3.  **Specialist Selection**: Integrated booking flow allowing customers to choose their preferred stylist/expert based on real-time availability.
+4.  **Digital Gift Cards**: Secure redemption system for digital vouchers and balance management.
+5.  **Branded Success Dashboard**: Redesigned payment confirmation screen with Salon Luxe branding and detailed transaction summaries.
+6.  **Advanced Admin Analytics**: Enhanced dashboard showing revenue growth, service performance, and user retention metrics.
+7.  **Smart SMS/WhatsApp Formats**: Transactional notifications optimized for mobile readability and social sharing.
 
-### Customer side
+## What backend type is used?
 
-- User registration and login support.
-- Booking form for service, date, and time slot.
-- Booking confirmation data returned from the API.
-- Account page and user session support.
+This project uses a monolithic REST backend:
 
-### Booking and notification side
+- Single Express server in `server/index.js`
+- Business/data access in `server/db.js`
+- SQLite file database in `server/data/salon.sqlite`
+- JSON over HTTP API (`/api/*` routes)
 
-- Booking slot creation through the frontend booking flow.
-- Booking persistence in SQLite.
-- Payment record creation along with each booking.
-- Email confirmation after booking is created.
+## Frontend to backend connection
 
-### Admin side
+- Frontend base API URL is `http://localhost:4000/api` (in `src/context/AuthContext.jsx`).
+- Backend runs on port `4000`.
+- Frontend runs on Vite dev port (typically `5173+`).
+- CORS allows localhost/127.0.0.1 origins on any port for dev.
 
-- Admin registration and login.
-- Admin summary dashboard.
-- Booking status updates.
-- Payment status updates.
-- JSON export of app data.
+## Tech stack
 
-## Technology stack
+### Runtime
 
-### Frontend tools
+- react
+- react-dom
+- react-router-dom
+- express
+- cors
+- dotenv
+- better-sqlite3
+- nodemailer
+- framer-motion
+- lucide-react
 
-- React 19
-- React Router
-- Vite
-- Framer Motion
-- Lucide React icons
-- Tailwind CSS 4 pipeline
+### Development
 
-### Backend tools
-
-- Express 5
-- CORS
-- Better SQLite 3
-- Nodemailer for email delivery
-
-### Storage
-
-- SQLite database file in `server/data/salon.sqlite`
-- Local browser storage for some user/admin session data
+- vite
+- @vitejs/plugin-react
+- nodemon
+- eslint and related plugins
+- postcss + tailwindcss pipeline
 
 ## Project structure
 
 ```text
 project2_salon/
-├── README.md
 ├── package.json
-├── vite.config.js
-├── eslint.config.js
+├── README.md
+├── .env                  # root env (loaded first)
 ├── server/
+│   ├── .env              # server env (overrides root env)
 │   ├── index.js
 │   ├── db.js
 │   └── data/
 │       └── salon.sqlite
 └── src/
-	├── App.jsx
-	├── App.css
-	├── index.css
-	├── main.jsx
-	├── components/
-	├── context/
-	├── data/
-	└── pages/
+		├── App.jsx
+		├── main.jsx
+		├── context/
+		│   └── AuthContext.jsx
+		├── pages/
+		├── components/
+		└── data/
 ```
 
-## How the flow works
+## API keys and environment variables
 
-### Registration flow
+This project does not use third-party API keys in source code. It uses environment secrets for SMTP and optional Twilio SMS.
 
-1. User enters name, email, and mobile number.
-2. Frontend calls `POST /api/users/register` or the app's registration flow.
-3. Server validates the details and creates the user.
-
-### Login flow
-
-1. User enters login credentials.
-2. Frontend calls the login flow in the app.
-3. Server returns the authenticated user profile.
-
-### Booking flow
-
-1. Authenticated user submits booking details.
-2. Frontend calls `POST /api/bookings`.
-3. Server creates booking and payment records in SQLite.
-4. Server sends booking confirmation email if an email address is available.
-
-## API endpoints
-
-### Health and app info
-
-- `GET /` - Basic backend status message.
-- `GET /api/health` - Health check endpoint.
-
-### Auth
-
-- `POST /api/users/register` - Legacy direct register route kept for compatibility.
-
-### Booking
-
-- `POST /api/bookings` - Create booking and payment record.
-- `GET /api/bookings` - Return all bookings.
-
-### Admin
-
-- `GET /api/admin/summary` - Dashboard summary and records.
-- `PATCH /api/admin/bookings/:id/status` - Update booking status.
-- `PATCH /api/admin/payments/:id/status` - Update payment status.
-- `GET /api/admin/export` - Export app data as JSON.
-
-## Installation
-
-```bash
-npm install
-```
-
-## Run commands
-
-### Development
-
-Start the backend:
-
-```bash
-npm run dev:server
-```
-
-Start the frontend:
-
-```bash
-npm run dev
-```
-
-### Production build
-
-Build the frontend:
-
-```bash
-npm run build
-```
-
-Preview the production build:
-
-```bash
-npm run preview
-```
-
-### Linting
-
-```bash
-npm run lint
-```
-
-## Environment variables
-
-The app works in local development without SMTP credentials, but real email delivery needs environment variables.
-
-### Email delivery
-
-Set these for real booking confirmation emails:
+### Required for email OTP and booking email
 
 - `SMTP_HOST`
 - `SMTP_PORT`
 - `SMTP_USER`
 - `SMTP_PASS`
-- `SMTP_SECURE` - optional, set to `true` for secure SMTP
-- `FROM_EMAIL` - optional sender address
+- `FROM_EMAIL`
 
-If these are not set, the server falls back to Ethereal test email mode for development.
+### Optional
 
-## Local testing notes
+- `SMTP_SECURE` (`true` for 465, `false` for 587)
+- `PORT` (default: `4000`)
+- `DEFAULT_COUNTRY_CODE` (default: `+91`)
 
-- Backend runs on port `4000`.
-- Frontend runs on port `5173`.
-- The frontend is configured to talk to `http://localhost:4000/api`.
-- The SQLite database is created automatically when the backend starts.
+### Optional SMS (Twilio)
 
-## Available project tools and packages
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_PHONE_NUMBER`
 
-### Runtime tools
+If Twilio values are missing, SMS flow runs in dev mode (logs OTP).
 
-- React for UI rendering
-- React Router for navigation and protected routes
-- Express for API routes
-- SQLite for persistent booking and user data
-- Nodemailer for booking email delivery
+### Example `server/.env`
 
-### UI and utility tools
+```env
+PORT=4000
 
-- Framer Motion for motion effects
-- Lucide React for icons
-- Tailwind CSS/PostCSS pipeline for styling
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-16-char-app-password
+FROM_EMAIL="Salon Luxe <your-email@gmail.com>"
 
-### Development tools
+DEFAULT_COUNTRY_CODE=+91
+```
 
-- Vite for dev server and production builds
-- ESLint for linting
-- Nodemon for automatic backend restarts during development
+Security note: never commit real credentials to git.
 
-## Notes
+## NPM scripts (tools/commands)
 
-- `npm start` is not defined in `package.json`.
-- Use `npm run dev:server` for the backend and `npm run dev` for the frontend.
+```json
+{
+	"start": "concurrently \"npm run dev:server\" \"npm run dev\"",
+	"dev": "vite",
+	"dev:server": "nodemon server/index.js",
+	"start:server": "node server/index.js",
+	"build": "vite build",
+	"preview": "vite preview",
+	"lint": "eslint ."
+}
+```
 
-## Quick start
+## Run frontend and backend (full flow)
+
+### 1) Install dependencies
 
 ```bash
 npm install
-npm run dev:server
-npm run dev
 ```
 
-Then open the app in your browser at `http://localhost:5173`.
+### 2) Configure environment
+
+- Add SMTP values in `server/.env`.
+- If both `.env` and `server/.env` exist, `server/.env` overrides root values for backend.
+
+### 3) Start both frontend and backend
+
+```bash
+npm start
+```
+
+### 4) Access app
+
+- Frontend: check terminal URL (for example `http://localhost:5176`)
+- Backend health: `http://localhost:4000/api/health`
+
+## REST API reference
+
+### System
+
+- `GET /` - backend status overview
+- `GET /api/health` - health check
+- `POST /api/smtp/test` - verify SMTP login/send
+
+### OTP and auth
+
+- `POST /api/otp/send`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
+- `POST /api/users/register` (legacy compatibility route)
+
+### Admin
+
+- `POST /api/admin/register`
+- `POST /api/admin/login`
+- `GET /api/admin/summary`
+- `PATCH /api/admin/bookings/:id/status`
+- `PATCH /api/admin/payments/:id/status`
+- `DELETE /api/admin/bookings/:id`
+- `DELETE /api/admin/payments/:id`
+- `DELETE /api/admin/users/:id`
+- `GET /api/admin/export`
+
+### Booking
+
+- `POST /api/bookings`
+- `GET /api/bookings`
+
+## Detailed API examples
+
+### Send OTP
+
+Endpoint: `POST /api/otp/send`
+
+Request body:
+
+```json
+{
+	"email": "user@example.com",
+	"purpose": "register"
+}
+```
+
+Success response:
+
+```json
+{
+	"message": "OTP sent successfully to email."
+}
+```
+
+Error response examples:
+
+```json
+{
+	"message": "Email address is required."
+}
+```
+
+```json
+{
+	"message": "Please wait 18 seconds before requesting another OTP."
+}
+```
+
+### Register user with OTP
+
+Endpoint: `POST /api/auth/register`
+
+Request body:
+
+```json
+{
+	"name": "Vishnu",
+	"email": "user@example.com",
+	"phone": "9876543210",
+	"password": "secret123",
+	"otp": "123456"
+}
+```
+
+Success response:
+
+```json
+{
+	"id": "USR-1714689826000",
+	"name": "Vishnu",
+	"email": "user@example.com",
+	"phone": "9876543210",
+	"emailVerified": true
+}
+```
+
+### User login
+
+Endpoint: `POST /api/auth/login`
+
+Request body:
+
+```json
+{
+	"identifier": "user@example.com",
+	"password": "secret123"
+}
+```
+
+### Forgot password
+
+Endpoint: `POST /api/auth/forgot-password`
+
+Request body:
+
+```json
+{
+	"email": "user@example.com"
+}
+```
+
+### Reset password
+
+Endpoint: `POST /api/auth/reset-password`
+
+Request body:
+
+```json
+{
+	"email": "user@example.com",
+	"otp": "654321",
+	"password": "newSecret123"
+}
+```
+
+### Create booking
+
+Endpoint: `POST /api/bookings`
+
+Request body example:
+
+```json
+{
+	"booking": {
+		"id": "BK-1714689827000",
+		"customer": "Vishnu",
+		"email": "user@example.com",
+		"phone": "9876543210",
+		"service": "Hair Spa",
+		"date": "2026-05-10",
+		"slot": "14:00",
+		"specialist": "Any",
+		"status": "Pending",
+		"createdAt": "2026-05-02T16:00:00.000Z"
+	},
+	"payment": {
+		"id": "PAY-1714689827001",
+		"customer": "Vishnu",
+		"service": "Hair Spa",
+		"amount": 799,
+		"method": "UPI",
+		"status": "Paid",
+		"date": "2026-05-10",
+		"createdAt": "2026-05-02T16:00:00.000Z"
+	}
+}
+```
+
+## Data model summary
+
+SQLite tables used by backend:
+
+- `users`: registered users, hashed passwords, verification state
+- `admins`: admin accounts and roles
+- `bookings`: booking records and status
+- `payments`: payment status and amounts
+- `password_resets`: OTP lifecycle for password reset
+
+Database location:
+
+- `server/data/salon.sqlite`
+
+## Internal backend behavior
+
+- OTPs are generated in-memory and hashed with SHA-256.
+- OTP cooldown: 30 seconds between resend attempts per target/purpose.
+- OTP daily limit: 10 sends per day per target/purpose.
+- OTP expiry: 10 minutes.
+- Registration and password reset validate OTP before mutating user data.
+- Booking creation writes booking and payment in a single SQLite transaction.
+
+## Development tools and flow
+
+- `npm start` runs frontend + backend together via concurrently.
+- Backend auto-reload: nodemon watches `server/*`.
+- Frontend hot reload: Vite HMR.
+- Linting: ESLint config from `eslint.config.js`.
+
+Useful direct commands:
+
+```bash
+npm run dev:server
+npm run dev
+npm run start:server
+npm run build
+npm run preview
+npm run lint
+```
+
+## Quick testing commands
+
+### SMTP test
+
+```bash
+node -e "fetch('http://localhost:4000/api/smtp/test',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:'your-email@gmail.com'})}).then(r=>r.text().then(t=>console.log(r.status,t))).catch(console.error)"
+```
+
+### OTP send test
+
+```bash
+node -e "fetch('http://localhost:4000/api/otp/send',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:'your-email@gmail.com'})}).then(r=>r.text().then(t=>console.log(r.status,t))).catch(console.error)"
+```
+
+## Common issues
+
+### `Failed to fetch` in frontend
+
+- Ensure backend is running on `4000`.
+- Ensure frontend is using `http://localhost:4000/api`.
+- CORS already allows localhost ports; restart backend after config changes.
+
+### Gmail `535 Username and Password not accepted`
+
+- Enable Google 2-Step Verification.
+- Generate a Gmail app password.
+- Use app password as `SMTP_PASS`.
+- Restart backend.
+
+### OTP shown in backend logs only
+
+- SMTP credentials are missing/invalid, so app may fall back to dev mode.
+- Set valid SMTP env values in `server/.env`.

@@ -6,8 +6,8 @@ function RegisterPage() {
   const { register, requestOtp } = useAuth()
   const navigate = useNavigate()
 
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '' })
-  const [otpData, setOtpData] = useState({ smsOtp: '' })
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' })
+  const [otpData, setOtpData] = useState({ emailOtp: '' })
   const [otpSent, setOtpSent] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -27,18 +27,12 @@ function RegisterPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-    if (!emailPattern.test(formData.email.trim().toLowerCase())) {
-      setError('Please enter a valid email address.')
-      return
-    }
     if (!otpSent) {
-      setError('Please send and verify the SMS OTP before registration.')
+      setError('Please send and verify the email OTP before registration.')
       return
     }
     try {
-      await register({ ...formData, otp: otpData.smsOtp.trim() })
+      await register({ email: formData.email, otp: otpData.emailOtp.trim() })
       setError('')
       setSuccessMessage('Successfully registered.')
       setTimeout(() => {
@@ -51,20 +45,28 @@ function RegisterPage() {
 
   const handleSendOtp = () => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
+      setError('Please fill in all fields before requesting OTP.')
+      return
+    }
     if (!emailPattern.test(formData.email.trim().toLowerCase())) {
       setError('Enter a valid email before OTP verification.')
       return
     }
-    if (formData.phone.trim().length !== 10) {
-      setError('Enter a valid 10-digit phone number before OTP verification.')
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters.')
       return
     }
-
-    requestOtp({ phone: formData.phone.trim(), email: formData.email.trim(), purpose: 'register' })
+    
+    requestOtp({ 
+      email: formData.email.trim(), 
+      purpose: 'register',
+      userData: formData
+    })
       .then((data) => {
         setOtpSent(true)
         setError('')
-        setSuccessMessage(data.devMode ? `Dev OTP: ${data.devOtp}` : 'Verification code sent to your mobile number.')
+        setSuccessMessage(data.message || 'Verification code sent to your email.')
       })
       .catch((err) => {
         setError(err.message)
@@ -107,21 +109,31 @@ function RegisterPage() {
             pattern="[0-9]{10}"
             required
           />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-sm outline-none ring-amber-300 focus:ring-2"
+            minLength={6}
+            required
+          />
           <button
             type="button"
             onClick={handleSendOtp}
             className="w-full rounded-xl border border-amber-300/60 bg-amber-300/10 px-5 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
           >
-            Send SMS OTP
+            Send Email OTP
           </button>
           {otpSent ? (
             <div className="grid gap-3">
               <input
                 type="text"
-                placeholder="SMS OTP"
-                value={otpData.smsOtp}
+                placeholder="Email OTP"
+                value={otpData.emailOtp}
                 onChange={(event) => {
-                  setOtpData((prev) => ({ ...prev, smsOtp: event.target.value.replace(/\D/g, '').slice(0, 6) }))
+                  setOtpData((prev) => ({ ...prev, emailOtp: event.target.value.replace(/\D/g, '').slice(0, 6) }))
                   setError('')
                 }}
                 className="w-full rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-sm outline-none ring-amber-300 focus:ring-2"
@@ -142,7 +154,7 @@ function RegisterPage() {
             type="submit"
             className="w-full rounded-xl bg-amber-300 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-200"
           >
-            Create Account After OTP
+            Create Account After Email Verification
           </button>
         </form>
 

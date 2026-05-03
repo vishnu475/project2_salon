@@ -9,10 +9,10 @@ function AdminRegisterPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     try {
-      registerAdmin(formData)
+      await registerAdmin(formData)
       setError('')
       setSuccess('Admin registration saved successfully.')
       setTimeout(() => {

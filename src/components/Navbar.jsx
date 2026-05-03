@@ -24,14 +24,6 @@ function Navbar() {
               </a>
             </li>
           ))}
-          <li>
-            <Link
-              to="/admin/login"
-              className="rounded-full border border-amber-300/60 bg-amber-300/10 px-4 py-2 text-xs font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
-            >
-              Admin
-            </Link>
-          </li>
         </ul>
         <div className="hidden items-center gap-3 md:flex">
           {isAuthenticated ? (
@@ -92,15 +84,6 @@ function Navbar() {
               </a>
             </li>
           ))}
-          <li>
-            <Link
-              to="/admin/login"
-              onClick={() => setIsOpen(false)}
-              className="block rounded-lg border border-amber-300/60 bg-amber-300/10 px-3 py-2 text-center font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
-            >
-              Admin
-            </Link>
-          </li>
           <li>
             {isAuthenticated ? (
               <div className="grid grid-cols-2 gap-2">

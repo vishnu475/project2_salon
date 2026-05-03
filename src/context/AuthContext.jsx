@@ -9,7 +9,7 @@ const ADMIN_SESSION_KEY = 'salon_admin_session'
 const ADMIN_PROFILE_KEY = 'salon_admin_profile'
 const BOOKING_SLOTS_KEY = 'salon_booking_slots'
 const PAYMENT_DETAILS_KEY = 'salon_payment_details'
-const API_BASE_URL = 'http://localhost:4000/api'
+import { API_BASE_URL } from '../config'
 
 function parseStorageItem(key, fallback) {
   try {
@@ -28,11 +28,11 @@ export function AuthProvider({ children }) {
   const [bookingSlots, setBookingSlots] = useState(() => parseStorageItem(BOOKING_SLOTS_KEY, seedBookingSlots))
   const [paymentDetails, setPaymentDetails] = useState(() => parseStorageItem(PAYMENT_DETAILS_KEY, seedPaymentDetails))
 
-  const requestOtp = async ({ phone, purpose, email }) => {
+  const requestOtp = async ({ email, purpose, userData }) => {
     const response = await fetch(`${API_BASE_URL}/otp/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, purpose, email }),
+      body: JSON.stringify({ email, purpose, userData }),
     })
     const data = await response.json()
 
@@ -43,25 +43,48 @@ export function AuthProvider({ children }) {
     return data
   }
 
-  const register = async ({ name, email, phone, otp }) => {
-    const normalizedEmail = email.trim().toLowerCase()
-    const normalizedPhone = phone.trim()
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const requestPasswordReset = async ({ email }) => {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    const data = await response.json()
 
-    if (!normalizedEmail || !name.trim() || !normalizedPhone || !otp) {
-      throw new Error('All fields and OTP are required.')
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to send recovery code.')
     }
-    if (!emailPattern.test(normalizedEmail)) {
-      throw new Error('Please enter a valid email address.')
+
+    return data
+  }
+
+  const resetPassword = async ({ email, otp, password }) => {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, password }),
+    })
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to reset password.')
+    }
+
+    return data
+  }
+
+  const register = async ({ email, otp }) => {
+    const normalizedEmail = email.trim().toLowerCase()
+    
+    if (!normalizedEmail || !otp) {
+      throw new Error('Email and OTP are required.')
     }
 
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: name.trim(),
         email: normalizedEmail,
-        phone: normalizedPhone,
         otp,
       }),
     })
@@ -83,21 +106,22 @@ export function AuthProvider({ children }) {
     )
   }
 
-  const login = async ({ phone, otp }) => {
-    const normalizedPhone = phone.trim()
+  const login = async ({ identifier, password }) => {
+    const normalizedIdentifier = identifier.trim()
+    const normalizedPassword = password.trim()
 
-    if (!normalizedPhone || !otp) {
-      throw new Error('Phone and OTP are required.')
+    if (!normalizedIdentifier || !normalizedPassword) {
+      throw new Error('Username/email and password are required.')
     }
 
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: normalizedPhone, otp }),
+      body: JSON.stringify({ identifier: normalizedIdentifier, password: normalizedPassword }),
     })
     const data = await response.json()
     if (!response.ok) {
-      throw new Error(data.message || 'Invalid login OTP.')
+      throw new Error(data.message || 'Invalid username/email or password.')
     }
 
     const safeUser = { id: data.id, name: data.name, email: data.email }
@@ -110,7 +134,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(CURRENT_USER_KEY)
   }
 
-  const registerAdmin = ({ name, email, password }) => {
+  const registerAdmin = async ({ name, email, password }) => {
     const normalizedEmail = email.trim().toLowerCase()
     const normalizedName = name.trim()
     const normalizedPassword = password.trim()
@@ -119,31 +143,53 @@ export function AuthProvider({ children }) {
       throw new Error('All admin fields are required.')
     }
 
-    const nextAdminProfile = {
-      id: Date.now(),
-      name: normalizedName,
-      email: normalizedEmail,
-      password: normalizedPassword,
-      role: 'admin',
+    if (normalizedPassword.length < 6) {
+      throw new Error('Password must be at least 6 characters.')
     }
 
+    const response = await fetch(`${API_BASE_URL}/admin/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: normalizedName,
+        email: normalizedEmail,
+        password: normalizedPassword,
+      }),
+    })
+
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to register admin.')
+    }
+
+    const nextAdminProfile = data
     setAdminProfile(nextAdminProfile)
     localStorage.setItem(ADMIN_PROFILE_KEY, JSON.stringify(nextAdminProfile))
   }
 
-  const loginAdmin = ({ email, password }) => {
+  const loginAdmin = async ({ email, password }) => {
     const normalizedEmail = email.trim().toLowerCase()
     const normalizedPassword = password.trim()
 
-    if (!adminProfile) {
-      throw new Error('Admin is not registered yet. Please register admin first.')
+    if (!normalizedEmail || !normalizedPassword) {
+      throw new Error('Email and password are required.')
     }
 
-    if (normalizedEmail !== adminProfile.email || normalizedPassword !== adminProfile.password) {
-      throw new Error('Invalid admin credentials.')
+    const response = await fetch(`${API_BASE_URL}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: normalizedEmail,
+        password: normalizedPassword,
+      }),
+    })
+
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.message || 'Invalid admin credentials.')
     }
 
-    const admin = { email: adminProfile.email, role: 'admin', name: adminProfile.name }
+    const admin = { email: data.email, role: data.role, name: data.name, id: data.id }
     setAdminSession(admin)
     localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(admin))
   }
@@ -153,7 +199,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(ADMIN_SESSION_KEY)
   }
 
-  const createBooking = async ({ customerName, phone, service, date, slot }) => {
+  const createBooking = async ({ customerName, phone, service, date, slot, specialist, amount, paymentMethod, paymentStatus }) => {
     const trimmedName = customerName.trim()
     const trimmedPhone = phone.trim()
     const trimmedService = service.trim()
@@ -169,10 +215,17 @@ export function AuthProvider({ children }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         customerName: trimmedName,
+        email: currentUser?.email || '',
         phone: trimmedPhone,
         service: trimmedService,
         date: trimmedDate,
         slot: trimmedSlot,
+        specialist: specialist || 'Any Specialist',
+        payment: {
+          amount: amount || '$0',
+          method: paymentMethod || 'Card',
+          status: paymentStatus || 'Pending'
+        }
       }),
     })
     const data = await response.json()
@@ -183,8 +236,8 @@ export function AuthProvider({ children }) {
     const newBooking = data.booking
     const newPayment = data.payment
 
-    const nextBookings = [newBooking, ...bookingSlots]
-    const nextPayments = [newPayment, ...paymentDetails]
+    const nextBookings = [newBooking, ...bookingSlots].filter(Boolean)
+    const nextPayments = [newPayment, ...paymentDetails].filter(Boolean)
     setBookingSlots(nextBookings)
     setPaymentDetails(nextPayments)
     localStorage.setItem(BOOKING_SLOTS_KEY, JSON.stringify(nextBookings))
@@ -203,6 +256,8 @@ export function AuthProvider({ children }) {
       isAdminAuthenticated: Boolean(adminSession?.role === 'admin'),
       register,
       requestOtp,
+      requestPasswordReset,
+      resetPassword,
       login,
       logout,
       registerAdmin,

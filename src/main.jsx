@@ -7,6 +7,7 @@ import ServiceDetailsPage from './pages/ServiceDetailsPage.jsx'
 import BookingPage from './pages/BookingPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import AdminLoginPage from './pages/AdminLoginPage.jsx'
 import AdminRegisterPage from './pages/AdminRegisterPage.jsx'
 import AdminDashboardPage from './pages/AdminDashboardPage.jsx'
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/services/:slug" element={<ServiceDetailsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/register" element={<AdminRegisterPage />} />
           <Route element={<ProtectedUserRoute />}>
