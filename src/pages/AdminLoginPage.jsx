@@ -37,15 +37,6 @@ function AdminLoginPage() {
         <p className="text-xs uppercase tracking-[0.25em] text-amber-300">Admin Access</p>
         <h1 className="mt-3 text-3xl font-semibold">Admin Login</h1>
         <p className="mt-2 text-sm text-neutral-300">Only authorized administrators can access the dashboard.</p>
-        {!adminProfile ? (
-          <p className="mt-2 rounded-xl border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-xs text-amber-200">
-            Admin profile not found. Please register admin first.
-          </p>
-        ) : (
-          <p className="mt-2 rounded-xl border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-200">
-            Registered admin email: {adminProfile.email}
-          </p>
-        )}
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <input

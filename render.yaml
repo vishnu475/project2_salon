@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: salon-fullstack
-    env: node
+    name: salon-luxe-monolith
+    runtime: node
     plan: free
     buildCommand: npm install && npm run build
     startCommand: npm start
@@ -10,9 +10,7 @@ services:
         value: 20
       - key: DATA_DIR
         value: /data
-      - key: PORT
-        value: 4000
     disk:
-      name: salon-data
+      name: salon-db
       mountPath: /data
       sizeGB: 1

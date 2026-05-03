@@ -40,6 +40,10 @@ import {
   getAllReviews,
   createGiftCard,
   verifyGiftCard,
+  createPendingUser,
+  getPendingUser,
+  deletePendingUser,
+  verifyUserEmail,
 } from './db.js'
 
 const app = express()
@@ -548,18 +552,25 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', (req, res) => {
   const { identifier, password } = req.body
-  const normalizedIdentifier = String(identifier || '').trim().toLowerCase()
+  const normalizedIdentifier = String(identifier || '').trim()
   const normalizedPassword = String(password || '').trim()
 
+  console.log('Login attempt for:', normalizedIdentifier)
+
   if (!normalizedIdentifier || !normalizedPassword) {
-    return res.status(400).json({ message: 'identifier and password are required.' })
+    return res.status(400).json({ message: 'Identifier and password are required.' })
   }
 
-  const user = verifyUserLogin(normalizedIdentifier, normalizedPassword)
+  // Try lowercase for email check, original for name check
+  const user = verifyUserLogin(normalizedIdentifier, normalizedPassword) || 
+               verifyUserLogin(normalizedIdentifier.toLowerCase(), normalizedPassword)
+
   if (!user) {
-    return res.status(401).json({ message: 'Invalid username/email or password, or email is not verified.' })
+    console.log('Login failed for:', normalizedIdentifier)
+    return res.status(401).json({ message: 'Invalid username/email or password.' })
   }
 
+  console.log('Login successful for:', user.email)
   return res.json({
     id: user.id,
     name: user.name,
@@ -1030,6 +1041,7 @@ app.post('/api/chat', (req, res) => {
     return res.status(500).json({ message: 'Chatbot error.' })
   }
 })
+
 
 // Serve static assets from the frontend build
 const distPath = path.join(__dirname, '..', 'dist')

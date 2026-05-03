@@ -1,5 +1,6 @@
 import { Users, CreditCard, CalendarClock, LogOut } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL, ROOT_URL } from '../config'
 
@@ -14,9 +15,13 @@ function getStatusPill(status) {
 }
 
 function AdminDashboardPage() {
-  const { users, paymentDetails, bookingSlots, logoutAdmin } = useAuth()
+  const { users, paymentDetails, bookingSlots, logoutAdmin, isAdminAuthenticated } = useAuth()
   const [liveData, setLiveData] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  if (!isAdminAuthenticated) {
+    return <Navigate to="/admin" replace />
+  }
 
   const loadSummary = async () => {
     try {

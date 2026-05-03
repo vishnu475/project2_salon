@@ -8,7 +8,7 @@ import fs from 'node:fs'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// In production (Render/Docker), we might want to store the DB on a persistent disk mount
+// In production (Render), we store the DB on a persistent disk mount
 const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data')
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true })
