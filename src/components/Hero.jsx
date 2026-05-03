@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CalendarCheck2, CircleCheckBig, Sparkles } from 'lucide-react'
 import { heroSlides } from '../data/content'
-import heroBackgroundVideo from '../../SnapInsta.to_AQPpYdjqX_Yzk5__dPJhvPpQSyYZkrNJzT-6yOZ8JPcbf1dip8dBQ0zssvUD0sZc76V8U_RzKrO1YXcJLT4ZLhE1jfL_oyGEePj5Cjk.mp4'
 
 function Hero() {
   const [activeSlide, setActiveSlide] = useState(0)
@@ -19,15 +18,12 @@ function Hero() {
   return (
     <section id="home" className="relative min-h-[92vh] overflow-hidden">
       <div className="absolute inset-0">
-        <video
-          src={heroBackgroundVideo}
+        <img
+          src={slide.image}
           className="h-full w-full object-cover"
-          autoPlay
-          loop
-          muted
-          playsInline
+          alt="Luxury Salon"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/65 to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/75 to-black/50" />
       </div>
 
       <div className="relative mx-auto grid min-h-[92vh] max-w-7xl items-center gap-10 px-6 py-20 md:px-8 lg:grid-cols-[1.1fr_0.9fr]">
