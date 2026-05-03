@@ -12,6 +12,7 @@ import Booking from './components/Booking'
 import Footer from './components/Footer'
 import AIChatbot from './components/AIChatbot'
 import AIMakeover from './components/AIMakeover'
+import ThreeBackground from './components/ThreeBackground'
 
 import { ArrowUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -30,7 +31,8 @@ function App() {
   }, [])
 
   return (
-    <div className="bg-neutral-950 text-white selection:bg-amber-300 selection:text-black">
+    <div className="relative bg-transparent text-white selection:bg-amber-300 selection:text-black">
+      <ThreeBackground />
       <Navbar />
       <Hero />
       <motion.div

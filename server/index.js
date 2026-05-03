@@ -1,4 +1,5 @@
 import express from 'express'
+import { createServer } from 'node:http'
 import cors from 'cors'
 import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
@@ -49,6 +50,13 @@ import {
   verifyUserEmail,
 } from './db.js'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// Load root .env first, then let server/.env override it when present.
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
+dotenv.config({ path: path.resolve(__dirname, '.env'), override: true })
+
 const app = express()
 const PORT = process.env.PORT || 4000
 const OTP_TTL_MS = 10 * 60 * 1000
@@ -56,12 +64,6 @@ const OTP_RESEND_COOLDOWN_MS = 30 * 1000
 const OTP_DAILY_LIMIT = 10
 const otpStore = new Map()
 const otpDailyCounter = new Map()
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-// Load root .env first, then let server/.env override it when present.
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
-dotenv.config({ path: path.resolve(__dirname, '.env'), override: true })
 
 app.use(cors())
 app.use(express.json())
