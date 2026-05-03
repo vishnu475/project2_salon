@@ -11,6 +11,7 @@ function RegisterPage() {
   const [otpSent, setOtpSent] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [isResending, setIsResending] = useState(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -58,6 +59,7 @@ function RegisterPage() {
       return
     }
     
+    setIsResending(true)
     requestOtp({ 
       email: formData.email.trim(), 
       purpose: 'register',
@@ -76,6 +78,9 @@ function RegisterPage() {
       })
       .catch((err) => {
         setError(err.message)
+      })
+      .finally(() => {
+        setIsResending(false)
       })
   }
 
@@ -125,29 +130,41 @@ function RegisterPage() {
             minLength={6}
             required
           />
-          <button
-            type="button"
-            onClick={handleSendOtp}
-            className="w-full rounded-xl border border-amber-300/60 bg-amber-300/10 px-5 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
-          >
-            Send Email OTP
-          </button>
           {otpSent ? (
             <div className="grid gap-3">
+              <label htmlFor="otp-input" className="text-xs text-neutral-400">Enter the 6-digit code sent to {formData.email}</label>
               <input
+                id="otp-input"
                 type="text"
-                placeholder="Email OTP"
+                placeholder="000000"
                 value={otpData.emailOtp}
                 onChange={(event) => {
                   setOtpData((prev) => ({ ...prev, emailOtp: event.target.value.replace(/\D/g, '').slice(0, 6) }))
                   setError('')
                 }}
-                className="w-full rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-sm outline-none ring-amber-300 focus:ring-2"
+                className="w-full rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-center text-xl tracking-[0.5em] outline-none ring-amber-300 focus:ring-2 font-mono"
                 maxLength={6}
+                aria-label="Email verification code"
                 required
               />
+              <button
+                type="button"
+                onClick={handleSendOtp}
+                disabled={isResending}
+                className="text-xs text-amber-300/80 hover:text-amber-300 underline underline-offset-4 self-end disabled:opacity-50"
+              >
+                {isResending ? 'Sending...' : 'Did not receive code? Resend'}
+              </button>
             </div>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              className="w-full rounded-xl border border-amber-300/60 bg-amber-300/10 px-5 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
+            >
+              Verify Email with OTP
+            </button>
+          )}
 
           {error ? <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p> : null}
           {successMessage ? (

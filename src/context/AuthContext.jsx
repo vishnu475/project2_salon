@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useMemo, useState, useEffect } from 'react'
 import { bookingSlots as seedBookingSlots, paymentDetails as seedPaymentDetails } from '../data/adminData'
 
 const AuthContext = createContext(null)
@@ -21,12 +21,37 @@ function parseStorageItem(key, fallback) {
 }
 
 export function AuthProvider({ children }) {
-  const [users, setUsers] = useState(() => parseStorageItem(USERS_KEY, []))
+  const [users, setUsers] = useState([])
   const [currentUser, setCurrentUser] = useState(() => parseStorageItem(CURRENT_USER_KEY, null))
   const [adminSession, setAdminSession] = useState(() => parseStorageItem(ADMIN_SESSION_KEY, null))
   const [adminProfile, setAdminProfile] = useState(() => parseStorageItem(ADMIN_PROFILE_KEY, null))
-  const [bookingSlots, setBookingSlots] = useState(() => parseStorageItem(BOOKING_SLOTS_KEY, seedBookingSlots))
-  const [paymentDetails, setPaymentDetails] = useState(() => parseStorageItem(PAYMENT_DETAILS_KEY, seedPaymentDetails))
+  const [bookingSlots, setBookingSlots] = useState([])
+  const [paymentDetails, setPaymentDetails] = useState([])
+
+  // Fetch initial dynamic data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const bookingsRes = await fetch(`${API_BASE_URL}/bookings`)
+        if (bookingsRes.ok) {
+          const { bookings } = await bookingsRes.json()
+          setBookingSlots(bookings)
+        }
+        
+        // Admin summary includes payments
+        if (adminSession?.role === 'admin') {
+          const summaryRes = await fetch(`${API_BASE_URL}/admin/summary`)
+          if (summaryRes.ok) {
+            const summary = await summaryRes.json()
+            setPaymentDetails(summary.payments || [])
+          }
+        }
+      } catch (err) {
+        console.error('Initial fetch failed:', err)
+      }
+    }
+    fetchData()
+  }, [adminSession])
 
   const requestOtp = async ({ email, purpose, userData }) => {
     const response = await fetch(`${API_BASE_URL}/otp/send`, {
@@ -94,12 +119,8 @@ export function AuthProvider({ children }) {
     }
 
     const newUser = data
-
-    const nextUsers = [...users, newUser]
-    setUsers(nextUsers)
     setCurrentUser({ id: newUser.id, name: newUser.name, email: newUser.email })
 
-    localStorage.setItem(USERS_KEY, JSON.stringify(nextUsers))
     localStorage.setItem(
       CURRENT_USER_KEY,
       JSON.stringify({ id: newUser.id, name: newUser.name, email: newUser.email }),
@@ -236,12 +257,8 @@ export function AuthProvider({ children }) {
     const newBooking = data.booking
     const newPayment = data.payment
 
-    const nextBookings = [newBooking, ...bookingSlots].filter(Boolean)
-    const nextPayments = [newPayment, ...paymentDetails].filter(Boolean)
-    setBookingSlots(nextBookings)
-    setPaymentDetails(nextPayments)
-    localStorage.setItem(BOOKING_SLOTS_KEY, JSON.stringify(nextBookings))
-    localStorage.setItem(PAYMENT_DETAILS_KEY, JSON.stringify(nextPayments))
+    setBookingSlots(prev => [newBooking, ...prev])
+    setPaymentDetails(prev => [newPayment, ...prev])
   }
 
   const value = useMemo(
