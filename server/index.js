@@ -311,13 +311,7 @@ async function sendEmailOtp(email, otp) {
   }
 }
 
-app.get('/', (_req, res) => {
-  res.json({
-    message: 'Salon backend is running.',
-    health: '/api/health',
-    summary: '/api/admin/summary',
-  })
-})
+
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'salon-backend' })
