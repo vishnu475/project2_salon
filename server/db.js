@@ -376,6 +376,21 @@ export function deleteUser(userId) {
   return result.changes > 0
 }
 
+export function deleteAllUsers() {
+  const result = db.prepare('DELETE FROM users').run()
+  return result.changes
+}
+
+export function deleteAllPayments() {
+  const result = db.prepare('DELETE FROM payments').run()
+  return result.changes
+}
+
+export function deleteAllBookings() {
+  const result = db.prepare('DELETE FROM bookings').run()
+  return result.changes
+}
+
 export function getPasswordResetByEmail(email) {
   return db.prepare('SELECT * FROM password_resets WHERE email = ?').get(email)
 }

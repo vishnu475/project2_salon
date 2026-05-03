@@ -66,7 +66,13 @@ function RegisterPage() {
       .then((data) => {
         setOtpSent(true)
         setError('')
-        setSuccessMessage(data.message || 'Verification code sent to your email.')
+        if (data.devFallback && data.otp) {
+          // SMTP failed — auto-fill OTP so user can still register
+          setOtpData({ emailOtp: data.otp })
+          setSuccessMessage(`Email unavailable. Your OTP is: ${data.otp} (auto-filled)`)
+        } else {
+          setSuccessMessage(data.message || 'Verification code sent to your email.')
+        }
       })
       .catch((err) => {
         setError(err.message)

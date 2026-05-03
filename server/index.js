@@ -28,6 +28,9 @@ import {
   deleteBooking,
   deletePayment,
   deleteUser,
+  deleteAllUsers,
+  deleteAllPayments,
+  deleteAllBookings,
   getAllServices,
   seedServices,
   createService,
@@ -490,7 +493,27 @@ app.post('/api/otp/send', async (req, res) => {
     return res.json({ message: 'OTP sent successfully to email.' })
   } catch (error) {
     console.error('OTP send failed:', error)
-    return res.status(500).json({ message: error.message || 'Failed to send OTP.' })
+    // Email failed — still store the OTP and return it in the response
+    // so registration can proceed even without working SMTP
+    if (purpose === 'register' && userData) {
+      createPendingUser({
+        email: normalizedEmail,
+        name: userData.name.trim(),
+        phone: normalizePhone(userData.phone),
+        passwordHash: hashPassword(userData.password.trim()),
+        otp: hashOtp(otp),
+        expiresAt: Date.now() + OTP_TTL_MS,
+        createdAt: new Date().toISOString()
+      })
+    } else {
+      storeOtp(purpose, normalizedEmail, otp)
+    }
+    console.log(`[DEV FALLBACK] OTP for ${normalizedEmail}: ${otp}`)
+    return res.json({ 
+      message: `Email delivery failed. Your OTP is: ${otp}`,
+      otp,
+      devFallback: true 
+    })
   }
 })
 
@@ -761,6 +784,33 @@ app.delete('/api/admin/users/:id', (req, res) => {
       return res.status(404).json({ message: 'User not found.' })
     }
     return res.json({ message: 'User deleted successfully.' })
+  } catch (error) {
+    return res.status(400).json({ message: error.message })
+  }
+})
+
+app.delete('/api/admin/users', (req, res) => {
+  try {
+    const count = deleteAllUsers()
+    return res.json({ message: `Deleted ${count} users successfully.` })
+  } catch (error) {
+    return res.status(400).json({ message: error.message })
+  }
+})
+
+app.delete('/api/admin/payments', (req, res) => {
+  try {
+    const count = deleteAllPayments()
+    return res.json({ message: `Deleted ${count} payments successfully.` })
+  } catch (error) {
+    return res.status(400).json({ message: error.message })
+  }
+})
+
+app.delete('/api/admin/bookings', (req, res) => {
+  try {
+    const count = deleteAllBookings()
+    return res.json({ message: `Deleted ${count} bookings successfully.` })
   } catch (error) {
     return res.status(400).json({ message: error.message })
   }

@@ -168,6 +168,51 @@ function AdminDashboardPage() {
     }
   }
 
+  const handleDeleteAllUsers = async () => {
+    if (!window.confirm('Are you SURE you want to delete ALL users? This action cannot be undone.')) return
+    try {
+      const response = await fetch(`${ROOT_URL}/api/admin/users`, { method: 'DELETE' })
+      const data = await response.json()
+      if (!response.ok) {
+        window.alert(data.message || 'Failed to delete all users.')
+        return
+      }
+      await loadSummary()
+    } catch {
+      window.alert('Could not connect to backend.')
+    }
+  }
+
+  const handleDeleteAllPayments = async () => {
+    if (!window.confirm('Are you SURE you want to delete ALL payments? This action cannot be undone.')) return
+    try {
+      const response = await fetch(`${ROOT_URL}/api/admin/payments`, { method: 'DELETE' })
+      const data = await response.json()
+      if (!response.ok) {
+        window.alert(data.message || 'Failed to delete all payments.')
+        return
+      }
+      await loadSummary()
+    } catch {
+      window.alert('Could not connect to backend.')
+    }
+  }
+
+  const handleDeleteAllBookings = async () => {
+    if (!window.confirm('Are you SURE you want to delete ALL bookings? This action cannot be undone.')) return
+    try {
+      const response = await fetch(`${ROOT_URL}/api/admin/bookings`, { method: 'DELETE' })
+      const data = await response.json()
+      if (!response.ok) {
+        window.alert(data.message || 'Failed to delete all bookings.')
+        return
+      }
+      await loadSummary()
+    } catch {
+      window.alert('Could not connect to backend.')
+    }
+  }
+
   const activeUsers = (liveData?.users || users || []).filter(Boolean)
   const activePayments = (liveData?.payments || paymentDetails || []).filter(Boolean)
   const activeBookings = (liveData?.bookings || bookingSlots || []).filter(Boolean)
@@ -355,7 +400,17 @@ function AdminDashboardPage() {
         </section>
 
         <section className="mt-8 rounded-2xl border border-white/10 bg-neutral-900 p-5">
-          <h2 className="text-xl font-semibold text-amber-300">User Details</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-amber-300">User Details</h2>
+            {activeUsers.length > 0 && (
+              <button
+                onClick={handleDeleteAllUsers}
+                className="rounded-xl border border-red-500/40 px-4 py-2 text-sm text-red-300 hover:bg-red-500/10"
+              >
+                Delete All Users
+              </button>
+            )}
+          </div>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="text-neutral-400">
@@ -400,7 +455,17 @@ function AdminDashboardPage() {
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-neutral-900 p-5">
-          <h2 className="text-xl font-semibold text-amber-300">Payment Details</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-amber-300">Payment Details</h2>
+            {activePayments.length > 0 && (
+              <button
+                onClick={handleDeleteAllPayments}
+                className="rounded-xl border border-red-500/40 px-4 py-2 text-sm text-red-300 hover:bg-red-500/10"
+              >
+                Delete All Payments
+              </button>
+            )}
+          </div>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="text-neutral-400">
@@ -459,7 +524,17 @@ function AdminDashboardPage() {
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-neutral-900 p-5">
-          <h2 className="text-xl font-semibold text-amber-300">Booking Slot Details</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-amber-300">Booking Slot Details</h2>
+            {activeBookings.length > 0 && (
+              <button
+                onClick={handleDeleteAllBookings}
+                className="rounded-xl border border-red-500/40 px-4 py-2 text-sm text-red-300 hover:bg-red-500/10"
+              >
+                Delete All Bookings
+              </button>
+            )}
+          </div>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="text-neutral-400">
