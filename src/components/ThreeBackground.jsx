@@ -22,17 +22,6 @@ function ThreeBackground() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     containerRef.current.appendChild(renderer.domElement)
 
-    // Wireframe Sphere
-    const sphereGeometry = new THREE.IcosahedronGeometry(3, 2)
-    const sphereMaterial = new THREE.MeshBasicMaterial({
-      color: 0x9b7bff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.15,
-    })
-    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
-    scene.add(sphere)
-
     // Floating Particles
     const particlesGeometry = new THREE.BufferGeometry()
     const particleCount = 1000
@@ -61,8 +50,6 @@ function ThreeBackground() {
     let animationId
     const animate = () => {
       animationId = requestAnimationFrame(animate)
-      sphere.rotation.x += 0.0015
-      sphere.rotation.y += 0.002
       particles.rotation.y += 0.0005
       renderer.render(scene, camera)
     }
