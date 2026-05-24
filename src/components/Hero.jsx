@@ -18,11 +18,15 @@ function Hero() {
   return (
     <section id="home" className="relative min-h-[92vh] overflow-hidden">
       <div className="absolute inset-0">
-        <img
-          src={slide.image}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
           className="h-full w-full object-cover"
-          alt="Luxury Salon"
-        />
+        >
+          <source src="/assets/hero-bg.mp4" type="video/mp4" />
+        </video>
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/75 to-black/50" />
       </div>
 
