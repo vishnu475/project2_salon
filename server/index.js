@@ -853,7 +853,7 @@ app.post('/api/bookings', async (req, res) => {
       id: `PAY-${Date.now() + 1}`,
       customer: booking.customer,
       service: booking.service,
-      amount: paymentPayload.amount || 50,
+      amount: parseFloat(String(paymentPayload.amount || '0').replace(/[^0-9.]/g, '')) || 50,
       method: paymentPayload.method || 'Card',
       status: paymentPayload.status || 'Pending',
       date: booking.date,
@@ -1123,3 +1123,15 @@ try {
 app.listen(PORT, () => {
   console.log(`Salon backend running on http://localhost:${PORT}`)
 })
+
+// Keep the process alive
+setInterval(() => {}, 1000 * 60 * 60)
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err)
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('UNHANDLED REJECTION at:', promise, 'reason:', reason)
+})
+

@@ -142,7 +142,7 @@ function Booking() {
             onChange={(event) => setSelectedService(event.target.value)}
             className="rounded-xl border border-white/20 bg-neutral-900 px-4 py-3 text-sm outline-none ring-amber-300 focus:ring-2"
           >
-            <option disabled>Select Service</option>
+            <option value="Select Service" disabled>Select Service</option>
             {dynamicServices.map((service) => (
               <option key={service.id} value={service.title}>
                 {service.title}
